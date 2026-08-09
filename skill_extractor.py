@@ -25,8 +25,11 @@ DEFAULT_SKILL_DICT_PATH = Path(__file__).parent / "data" / "skill_dictionary.csv
 def load_skill_dictionary(path: Path = DEFAULT_SKILL_DICT_PATH) -> pd.DataFrame:
     """Load the controlled skill list with its category labels."""
     df = pd.read_csv(path)
-    df["skill"] = df["skill"].str.strip().str.lower()
-    df["category"] = df["category"].str.strip().str.lower()
+    # Defensive: drop any blank/malformed rows before they can turn into
+    # NaN and break string operations downstream.
+    df = df.dropna(subset=["skill", "category"]).reset_index(drop=True)
+    df["skill"] = df["skill"].astype(str).str.strip().str.lower()
+    df["category"] = df["category"].astype(str).str.strip().str.lower()
     return df
 
 
