@@ -107,10 +107,16 @@ html, body, [class*="css"] {
 
 /* ---------- Sidebar / control panel ---------- */
 [data-testid="stSidebar"] {
-    background: var(--ink);
+    background: #193B3D;
 }
 [data-testid="stSidebar"] * {
-    color: #EDEFF4 !important;
+    color: #000000 !important;
+}
+/* Make normal text slightly stronger */
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] label {
+    color: #000000 !important;
+    font-weight: 800 !important;
 }
 [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
     font-family: 'Space Grotesk', sans-serif;
@@ -135,7 +141,14 @@ html, body, [class*="css"] {
 [data-testid="stSidebar"] hr {
     border-color: var(--ink-soft);
 }
+/* ---------- Privacy text ---------- */
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
+    color: #AEB8CC !important;
+}
 
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] * {
+    color: #AEB8CC !important;
+}
 /* ---------- Headings on the main canvas ---------- */
 h1 {
     font-family: 'Space Grotesk', sans-serif !important;
@@ -716,14 +729,7 @@ with st.container(key="report-card"):
             mime="application/pdf",
             use_container_width=True,
         )
-    with dl_col2:
-        st.download_button(
-            label="⬇ Download HTML (.html)",
-            data=html_report,
-            file_name=f"resume_analysis_{uploaded_file.name.split('.')[0]}.html",
-            mime="text/html",
-            use_container_width=True,
-        )
+  
     with dl_col3:
         report_lines = [
             "AI Resume Analyzer Report",
@@ -750,14 +756,7 @@ with st.container(key="report-card"):
             ["", "AI-Generated Feedback:", ai_feedback_text] if ai_feedback_text else []
         )
 
-        st.download_button(
-            label="⬇ Download Text (.txt)",
-            data="\n".join(report_lines),
-            file_name=f"resume_analysis_{uploaded_file.name.split('.')[0]}.txt",
-            mime="text/plain",
-            use_container_width=True,
-        )
-
+       
     st.caption(
         "The PDF is ready to submit as-is. The HTML report opens in any "
         "browser and can also be converted to PDF via Print → Save as PDF."
