@@ -1,16 +1,24 @@
 """
 semantic_matcher.py
 ---------------------
-Advanced Approach: "Sentence Transformers for semantic matching". This is a drop-in alternative to
+Advanced Approach: "Sentence Transformers for semantic matching"
+(project guide, Section 9). This is a drop-in alternative to
 job_matcher.py's TF-IDF + cosine similarity — it returns the same
 DataFrame shape (job_role, match_score, required_skills), so app.py
 can switch between the two freely.
 
-Why this is "advanced": TF-IDF only matches exact/overlapping words.
-Sentence Transformers embed meaning, so a resume that says "built
-predictive models" can match a role requiring "machine learning" even
-without that literal phrase. The trade-off is a larger dependency and
-a model download on first use.
+Like job_matcher.py, this compares the resume's EXTRACTED SKILLS
+against each role's required skills — not raw resume text — so
+switching between "TF-IDF (Beginner)" and "Sentence Transformers
+(Advanced)" in the dashboard gives scores on the same intuitive scale
+(full skill coverage -> a score close to 100%), rather than one mode
+being diluted by unrelated resume text and the other not.
+
+Why this is still "advanced" despite comparing skill lists rather than
+free text: embeddings capture *meaning*, so a resume skill written as
+"ML" or "predictive modelling" can still match a role requiring
+"machine learning" even without an exact string match — something
+TF-IDF's literal term overlap cannot do.
 
 Requires:
     pip install sentence-transformers
@@ -36,16 +44,19 @@ def _load_model(model_name: str = "all-MiniLM-L6-v2"):
 
 
 def match_resume_to_roles_semantic(
-    cleaned_resume_text: str,
+    resume_skills: list[str],
     job_roles_df: pd.DataFrame,
     model_name: str = "all-MiniLM-L6-v2",
 ) -> pd.DataFrame:
     """
-    Rank job roles by semantic similarity to the resume, using sentence
-    embeddings instead of TF-IDF term overlap.
+    Rank job roles by semantic similarity between the resume's skills
+    and each role's required skills, using sentence embeddings instead
+    of TF-IDF term overlap.
 
     Args:
-        cleaned_resume_text: cleaned resume text (from text_cleaner).
+        resume_skills: skill names extracted from the resume (same
+            input job_matcher.match_resume_to_roles takes) — NOT raw
+            resume text.
         job_roles_df: job roles DataFrame from job_matcher.load_job_roles()
             (must already have the "skills_list" column).
         model_name: any sentence-transformers model name.
@@ -64,9 +75,12 @@ def match_resume_to_roles_semantic(
 
     model = _load_model(model_name)
 
-    role_documents = job_roles_df["skills_list"].apply(lambda skills: ", ".join(skills)).tolist()
+    role_documents = job_roles_df["skills_list"].apply(
+        lambda skills: ", ".join(str(s) for s in skills)
+    ).tolist()
+    resume_document = ", ".join(str(s) for s in resume_skills)
 
-    resume_embedding = model.encode(cleaned_resume_text, convert_to_tensor=True)
+    resume_embedding = model.encode(resume_document, convert_to_tensor=True)
     role_embeddings = model.encode(role_documents, convert_to_tensor=True)
 
     scores = util.cos_sim(resume_embedding, role_embeddings)[0].tolist()
@@ -81,9 +95,9 @@ def match_resume_to_roles_semantic(
 if __name__ == "__main__":
     from job_matcher import load_job_roles
 
-    sample = "built predictive models and analyzed data using python"
+    sample_skills = ["python", "machine learning", "sql"]
     try:
-        result = match_resume_to_roles_semantic(sample, load_job_roles())
+        result = match_resume_to_roles_semantic(sample_skills, load_job_roles())
         print(result)
     except RuntimeError as e:
         print(f"Skipped: {e}")
