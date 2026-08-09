@@ -15,10 +15,23 @@ Run with:
 
 from datetime import datetime
 import html
+import os
 
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+
+# Bridge Streamlit Cloud's secrets manager into environment variables, since
+# ai_feedback.py reads os.getenv() (populated locally via .env / python-dotenv).
+# On Streamlit Cloud there is no .env file — secrets are set in the app's
+# dashboard instead — so without this bridge the AI feedback feature would
+# stay "not configured" even after adding a secret there.
+try:
+    for _key in ("GROQ_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY", "GROQ_MODEL", "GEMINI_MODEL", "OPENAI_MODEL"):
+        if _key in st.secrets:
+            os.environ.setdefault(_key, st.secrets[_key])
+except Exception:
+    pass  # no Streamlit secrets configured (e.g. running locally) — .env handles it instead
 
 from resume_parser import extract_resume_text, validate_file, ResumeParseError
 from text_cleaner import clean_resume_text
@@ -94,16 +107,10 @@ html, body, [class*="css"] {
 
 /* ---------- Sidebar / control panel ---------- */
 [data-testid="stSidebar"] {
-    background: #193B3D;
+    background: var(--ink);
 }
 [data-testid="stSidebar"] * {
-    color: #000000 !important;
-}
-/* Make normal text slightly stronger */
-[data-testid="stSidebar"] p,
-[data-testid="stSidebar"] label {
-    color: #000000 !important;
-    font-weight: 800 !important;
+    color: #EDEFF4 !important;
 }
 [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
     font-family: 'Space Grotesk', sans-serif;
@@ -128,14 +135,7 @@ html, body, [class*="css"] {
 [data-testid="stSidebar"] hr {
     border-color: var(--ink-soft);
 }
-/* ---------- Privacy text ---------- */
-[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
-    color: #AEB8CC !important;
-}
 
-[data-testid="stSidebar"] [data-testid="stCaptionContainer"] * {
-    color: #AEB8CC !important;
-}
 /* ---------- Headings on the main canvas ---------- */
 h1 {
     font-family: 'Space Grotesk', sans-serif !important;
@@ -460,6 +460,7 @@ with st.sidebar:
         job_roles_df["job_role"].tolist(),
         label_visibility="collapsed",
     )
+
     st.markdown("### 3. Advanced Approach (Optional)")
     skill_mode = st.radio(
         "Skill extraction",
@@ -503,6 +504,7 @@ cleaned_text = clean_resume_text(raw_text)
 resume_sections = extract_sections(raw_text)
 
 skill_dict = get_skill_dictionary()
+
 active_skill_mode = "Keyword (Beginner)"
 if skill_mode == "spaCy (Advanced)":
     try:
@@ -520,13 +522,13 @@ grouped_skills = group_by_category(found_skills)
 active_match_mode = "TF-IDF (Beginner)"
 if match_mode == "Sentence Transformers (Advanced)":
     try:
-        match_df = match_resume_to_roles_semantic(cleaned_text, job_roles_df)
+        match_df = match_resume_to_roles_semantic(found_skill_names, job_roles_df)
         active_match_mode = "Sentence Transformers (Advanced)"
     except RuntimeError as e:
         st.warning(f"⚠️ Sentence Transformers unavailable ({e}) — using TF-IDF instead.")
-        match_df = match_resume_to_roles(cleaned_text, job_roles_df)
+        match_df = match_resume_to_roles(found_skill_names, job_roles_df)
 else:
-    match_df = match_resume_to_roles(cleaned_text, job_roles_df)
+    match_df = match_resume_to_roles(found_skill_names, job_roles_df)
 
 top_matches = top_n_roles(match_df, 3)
 
@@ -714,7 +716,14 @@ with st.container(key="report-card"):
             mime="application/pdf",
             use_container_width=True,
         )
- 
+    with dl_col2:
+        st.download_button(
+            label="⬇ Download HTML (.html)",
+            data=html_report,
+            file_name=f"resume_analysis_{uploaded_file.name.split('.')[0]}.html",
+            mime="text/html",
+            use_container_width=True,
+        )
     with dl_col3:
         report_lines = [
             "AI Resume Analyzer Report",
@@ -741,7 +750,13 @@ with st.container(key="report-card"):
             ["", "AI-Generated Feedback:", ai_feedback_text] if ai_feedback_text else []
         )
 
-       
+        st.download_button(
+            label="⬇ Download Text (.txt)",
+            data="\n".join(report_lines),
+            file_name=f"resume_analysis_{uploaded_file.name.split('.')[0]}.txt",
+            mime="text/plain",
+            use_container_width=True,
+        )
 
     st.caption(
         "The PDF is ready to submit as-is. The HTML report opens in any "
@@ -752,6 +767,7 @@ with st.container(key="report-card"):
         "similarity. They do not evaluate soft skills, seniority, or "
         "context, and should be used as guidance only."
     )
+
 # --- Section: analysis history (SQLite database) ----------------------------
 with st.container(key="history-card"):
     st.markdown("### 💾 Analysis History (Optional)")
