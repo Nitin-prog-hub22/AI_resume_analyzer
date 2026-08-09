@@ -1,0 +1,49 @@
+skill,category
+python,programming
+java,programming
+c++,programming
+c#,programming
+javascript,programming
+sql,databases
+mysql,databases
+postgresql,databases
+mongodb,databases
+sqlite,databases
+pandas,data_handling
+numpy,data_handling
+excel,data_handling
+power bi,data_handling
+tableau,data_handling
+machine learning,ml
+deep learning,ml
+scikit-learn,ml
+tensorflow,ml
+pytorch,ml
+keras,ml
+nlp,nlp
+transformers,nlp
+hugging face,nlp
+spacy,nlp
+llm,ai
+rag,ai
+prompt engineering,ai
+opencv,computer_vision
+cnn,computer_vision
+yolo,computer_vision
+image processing,computer_vision
+docker,cloud_devops
+kubernetes,cloud_devops
+aws,cloud_devops
+azure,cloud_devops
+gcp,cloud_devops
+ci/cd,cloud_devops
+fastapi,tools
+flask,tools
+django,tools
+streamlit,tools
+git,tools
+github,tools
+rest api,tools
+apis,tools
+mlflow,tools
+.net,programming

@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.streamlit/secrets.toml
+reports/*
+!reports/.gitkeep
+sample_resumes/*.pdf
+sample_resumes/*.docx

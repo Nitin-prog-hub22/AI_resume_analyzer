@@ -1,0 +1,31 @@
+# --- Core (required) ---------------------------------------------------
+streamlit>=1.35.0             # User interface
+pypdf>=5.0.0                   # PDF resume extraction
+python-docx>=1.1.0             # DOCX resume extraction
+pandas>=2.0.0                  # Data handling
+numpy>=1.26.0                  # Data handling
+scikit-learn>=1.4.0            # TF-IDF + cosine similarity matching
+plotly>=5.20.0                 # Charts
+
+#--- Advanced Approach (Section 9 of the guide) --------------------------
+# spaCy entity/phrase extraction. After installing, also run:
+#     python -m spacy download en_core_web_sm
+spacy>=3.7.0
+
+# Sentence Transformers for semantic matching. The model itself
+# (all-MiniLM-L6-v2) downloads automatically the first time it's used.
+sentence-transformers>=2.2.0
+
+# --- Optional Advanced Features -----------------------------------------
+# Downloadable PDF analysis report (pure Python, no external binary needed)
+reportlab>=4.0.0
+
+# Optional AI feedback (Groq / Gemini / OpenAI) — only used if an API key
+# is set in .env. The app works fully without these; requests + dotenv are
+# lightweight enough to always install.
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+
+# --- Database ---------------------------------------------------------
+# SQLite is used via Python's built-in sqlite3 module
